@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semakan Keputusan Temuduga | Kelab CIENSTA JKA</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        display: ['Plus Jakarta Sans', 'sans-serif'],
+                    },
+                    colors: {
+                        navy: {
+                            950: '#070f21',
+                            900: '#0f1c3a',
+                            800: '#162952',
+                            700: '#1e3a73',
+                        },
+                        gold: {
+                            400: '#fbbf24',
+                            500: '#eab308',
+                            600: '#ca8a04',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Corak latar belakang kejuruteraan halus (blueprint grid) */
+        .bg-blueprint {
+            background-color: #0b162c;
+            background-image: 
+                linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+
+        /* Animasi kemunculan kad */
+        @keyframes fadeSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .animate-reveal {
+            animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        /* Gaya khas untuk cetakan slip */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            #printableSlip, #printableSlip * {
+                visibility: visible;
+            }
+            #printableSlip {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                box-shadow: none !important;
+                border: 2px solid #0f1c3a !important;
+                padding: 24px !important;
+                background: white !important;
+                color: black !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-only-header {
+                display: flex !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-amber-400 selection:text-navy-950">
+
+    <!-- Notifikasi Toast (Ganti alert/confirm) -->
+    <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Bahagian Header / Banner Rasmi -->
+    <header class="bg-blueprint text-white relative overflow-hidden border-b-4 border-amber-500 shadow-lg no-print">
+        <!-- Cahaya hiasan -->
+        <div class="absolute -top-24 -right-24 w-72 h-72 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-blue-500/15 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between border-b border-white/10">
+            <div class="flex items-center gap-3">
+                <!-- Logo SVG Tersuai Kelab CIENSTA JKA -->
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-md flex-shrink-0">
+                    <div class="w-full h-full bg-navy-950 rounded-[10px] flex items-center justify-center">
+                        <svg class="w-6 h-6 text-amber-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M2 20h20"/>
+                            <path d="M5 20V8l7-4 7 4v12"/>
+                            <path d="M9 20v-6h6v6"/>
+                            <path d="M9 10h6"/>
+                            <circle cx="12" cy="7" r="1" fill="currentColor"/>
+                        </svg>
+                    </div>
+                </div>
+                <div>
+                    <span class="text-xs font-bold tracking-widest uppercase text-amber-400 block">Politeknik / JKA</span>
+                    <span class="font-display font-extrabold text-base sm:text-lg tracking-tight text-white">KELAB CIENSTA</span>
+                </div>
+            </div>
+
+            <!-- Navigasi Mod (Pelajar vs Admin) -->
+            <nav class="flex items-center gap-2 bg-white/10 p-1 rounded-xl backdrop-blur-sm border border-white/10">
+                <button id="btnTabStudent" onclick="switchView('student')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-amber-500 text-navy-950 shadow-sm flex items-center gap-1.5">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    <span>Semakan</span>
+                </button>
+                <button id="btnTabAdmin" onclick="switchView('admin')" class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-200 hover:text-white hover:bg-white/10 flex items-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">Panel Admin (Urus Data)</span>
+                    <span class="sm:hidden">Admin</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Hero Tajuk Utama -->
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-12 text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/30 text-amber-300 text-xs font-semibold tracking-wide mb-4">
+                <i data-lucide="award" class="w-3.5 h-3.5"></i>
+                <span>PENGAMBILAN AJK & AHLI AKTIF SESI SEMASA</span>
+            </div>
+            <h1 class="font-display text-2xl sm:text-4xl font-extrabold tracking-tight text-white uppercase leading-tight">
+                SEMAKAN KEPUTUSAN TEMUDUGA
+            </h1>
+            <p class="mt-2.5 text-sm sm:text-base text-slate-300 font-medium">
+                Kelab CIENSTA - Jabatan Kejuruteraan Awam (JKA)
+            </p>
+        </div>
+    </header>
+
+    <!-- Kandungan Utama -->
+    <main class="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 -mt-6 mb-12 relative z-20">
+
+        <!-- ==========================================
+             PAPARAN 1: PORTAL SEMAKAN PELAJAR
+        =========================================== -->
+        <section id="studentView" class="space-y-6">
+            <!-- Kad Borang Carian -->
+            <div class="bg-white rounded-2xl shadow-xl shadow-slate-900/5 border border-slate-200/80 p-5 sm:p-8 no-print">
+                <form id="searchForm" onsubmit="handleSearch(event)" class="space-y-4">
+                    <div>
+                        <label for="regNoInput" class="block text-sm font-bold text-navy-900 mb-1.5">
+                            Masukkan No. Pendaftaran Pelajar
+                        </label>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <div class="relative flex-grow">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                                    <i data-lucide="id-card" class="w-5 h-5"></i>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="regNoInput" 
+                                    placeholder="Contoh: 20DKA24F1001" 
+                                    autocomplete="off"
+                                    class="w-full pl-11 pr-10 py-3.5 bg-slate-50 border-2 border-slate-200 rounded-xl text-navy-950 font-semibold uppercase tracking-wider placeholder:normal-case placeholder:font-normal placeholder:tracking-normal focus:outline-none focus:bg-white focus:border-navy-800 focus:ring-4 focus:ring-navy-800/10 transition-all"
+                                >
+                                <button type="button" id="clearInputBtn" onclick="clearSearch()" title="Padam" class="hidden absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
+                                    <i data-lucide="x-circle" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                            <button 
+                                type="submit" 
+                                class="px-6 py-3.5 bg-navy-900 hover:bg-navy-800 active:scale-[0.99] text-white font-bold rounded-xl shadow-md shadow-navy-900/20 transition-all flex items-center justify-center gap-2 whitespace-nowrap cursor-pointer"
+                            >
+                                <i data-lucide="search" class="w-5 h-5 text-amber-400"></i>
+                                <span>Semak Keputusan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Butang Klik Pantas Contoh Sampel -->
+                    <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center gap-2 text-xs">
+                        <span class="text-slate-500 font-medium flex items-center gap-1">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-500"></i>
+                            Contoh ujian pantas:
+                        </span>
+                        <button type="button" onclick="quickFill('20DKA24F1001')" class="px-2.5 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 font-mono font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            20DKA24F1001 (Berjaya)
+                        </button>
+                        <button type="button" onclick="quickFill('20DKA24F1004')" class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 font-mono font-semibold transition-colors flex items-center gap-1.5 cursor-pointer">
+                            <span class="w-2 h-2 rounded-full bg-rose-500"></span>
+                            20DKA24F1004 (Tidak Berjaya)
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Kawasan Paparan Keputusan -->
+            <div id="resultContainer" class="hidden"></div>
+        </section>
+
+        <!-- ==========================================
+             PAPARAN 2: PANEL ADMIN (URUS DATA)
+        =========================================== -->
+        <section id="adminView" class="hidden space-y-6 no-print">
+            
+            <!-- Skrin Log Masuk Admin -->
+            <div id="adminLoginCard" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-200 p-6 sm:p-8 animate-reveal">
+                <div class="w-12 h-12 rounded-xl bg-navy-900 text-amber-400 flex items-center justify-center mb-4 shadow-md">
+                    <i data-lucide="lock" class="w-6 h-6"></i>
+                </div>
+                <h2 class="font-display text-xl font-extrabold text-navy-950">Akses Panel Admin AJK</h2>
+                <p class="text-sm text-slate-500 mt-1">Sila masukkan kata laluan pentadbir untuk menguruskan senarai keputusan temuduga.</p>
+                
+                <form onsubmit="handleAdminLogin(event)" class="mt-5 space-y-4">
+                    <div>
+                        <label for="adminPasswordInput" class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5">Kata Laluan</label>
+                        <input 
+                            type="password" 
+                            id="adminPasswordInput" 
+                            placeholder="Masukkan kata laluan..."
+                            class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-navy-900 focus:ring-4 focus:ring-navy-900/10"
+                        >
+                        <p class="mt-2 text-xs text-slate-500 bg-amber-50 border border-amber-200/80 text-amber-900 px-3 py-2 rounded-lg flex items-center gap-1.5">
+                            <i data-lucide="info" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+                            <span>Petunjuk kata laluan lalai: <strong class="font-mono select-all">admin123</strong></span>
+                        </p>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-navy-900 hover:bg-navy-800 text-white font-bold rounded-xl shadow-md transition-all cursor-pointer">
+                        Log Masuk Admin
+                    </button>
+                </form>
+            </div>
+
+            <!-- Papan Pemuka Admin (Selepas Log Masuk) -->
+            <div id="adminDashboard" class="hidden space-y-6 animate-reveal">
+                <!-- Bar Statistik & Kawalan Atas -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h2 class="font-display text-lg sm:text-xl font-extrabold text-navy-950">Pengurusan Rekod Temuduga</h2>
+                            <span class="px-2.5 py-0.5 text-xs font-bold bg-emerald-100 text-emerald-800 rounded-full">Aktif</span>
+                        </div>
+                        <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Perubahan disimpan secara automatik ke dalam pelayar (LocalStorage).</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="resetToDefaultData()" class="px-3 py-2 text-xs font-semibold text-slate-600 hover:text-rose-700 bg-slate-100 hover:bg-rose-50 rounded-lg border border-slate-200 transition-colors flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            <span>Set Semula Data Asal</span>
+                        </button>
+                        <button onclick="logoutAdmin()" class="px-3 py-2 text-xs font-semibold text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer">
+                            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+                            <span>Log Keluar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Ringkasan Kiraan -->
+                <div class="grid grid-cols-3 gap-3 sm:gap-4">
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                        <span class="text-xs font-semibold text-slate-500 block">Jumlah Calon</span>
+                        <span id="statTotal" class="font-display text-2xl font-extrabold text-navy-950 mt-1 block">0</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-emerald-200 shadow-sm">
+                        <span class="text-xs font-semibold text-emerald-700 block">Berjaya</span>
+                        <span id="statPass" class="font-display text-2xl font-extrabold text-emerald-600 mt-1 block">0</span>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-rose-200 shadow-sm">
+                        <span class="text-xs font-semibold text-rose-700 block">Tidak Berjaya</span>
+                        <span id="statFail" class="font-display text-2xl font-extrabold text-rose-600 mt-1 block">0</span>
+                    </div>
+                </div>
+
+                <!-- Borang Tambah / Edit Calon & Import Pukal -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Tambah / Edit Rekod Individu -->
+                    <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6">
+                        <h3 id="formTitle" class="font-display font-bold text-base text-navy-950 mb-4 flex items-center gap-2">
+                            <i data-lucide="user-plus" class="w-5 h-5 text-amber-500"></i>
+                            <span>Tambah Rekod Pelajar Baharu</span>
+                        </h3>
+                        <form id="candidateForm" onsubmit="saveCandidate(event)" class="space-y-3.5">
+                            <input type="hidden" id="editOriginalRegNo" value="">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Nama Penuh Pelajar</label>
+                                <input type="text" id="inputFullName" required placeholder="Contoh: MUHAMMAD AMIRUL BIN HAKIM" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl uppercase focus:outline-none focus:border-navy-900">
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">No. Pendaftaran</label>
+                                    <input type="text" id="inputRegNo" required placeholder="Contoh: 20DKA24F1009" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl uppercase font-mono focus:outline-none focus:border-navy-900">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Kelas Semasa</label>
+                                    <input type="text" id="inputClass" required placeholder="Contoh: DKA2A" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl uppercase focus:outline-none focus:border-navy-900">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 mb-1">Status Keputusan</label>
+                                <select id="inputStatus" class="w-full px-3.5 py-2.5 text-sm bg-slate-50 border border-slate-300 rounded-xl font-semibold focus:outline-none focus:border-navy-900">
+                                    <option value="BERJAYA">BERJAYA</option>
+                                    <option value="TIDAK BERJAYA">TIDAK BERJAYA</option>
+                                </select>
+                            </div>
+                            <div class="pt-2 flex items-center gap-2">
+                                <button type="submit" id="btnSaveCandidate" class="px-5 py-2.5 bg-navy-900 hover:bg-navy-800 text-white text-sm font-bold rounded-xl transition-colors cursor-pointer">
+                                    Simpan Rekod
+                                </button>
+                                <button type="button" id="btnCancelEdit" onclick="cancelEdit()" class="hidden px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-sm font-semibold rounded-xl transition-colors cursor-pointer">
+                                    Batal Edit
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Muat Naik Pukal (CSV / Teks) -->
+                    <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-display font-bold text-base text-navy-950 mb-2 flex items-center gap-2">
+                                <i data-lucide="file-spreadsheet" class="w-5 h-5 text-emerald-600"></i>
+                                <span>Import Pukal (CSV / Teks)</span>
+                            </h3>
+                            <p class="text-xs text-slate-500 mb-3 leading-relaxed">
+                                Tampal senarai baris demi baris mengikut format:<br>
+                                <code class="bg-slate-100 px-1.5 py-0.5 rounded text-navy-900 font-semibold">NAMA, NO_PENDAFTARAN, KELAS, STATUS</code>
+                            </p>
+                            <textarea id="bulkCsvInput" rows="5" placeholder="ALI BIN ABU, 20DKA24F1020, DKA1A, BERJAYA&#10;SITI AMINAH, 20DKA24F1021, DKA2B, TIDAK BERJAYA" class="w-full p-3 text-xs font-mono bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:border-navy-900"></textarea>
+                        </div>
+                        <button type="button" onclick="handleBulkImport()" class="mt-3 w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>Muat Naik Senarai</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Jadual Senarai Rekod Semasa -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <h3 class="font-display font-bold text-base text-navy-950">Senarai Rekod Dalam Sistem</h3>
+                        <div class="relative w-full sm:w-64">
+                            <input type="text" id="adminFilterInput" oninput="renderAdminTable()" placeholder="Tapis nama / no. pendaftaran..." class="w-full pl-9 pr-3 py-2 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:border-navy-900">
+                            <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5"></i>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold uppercase tracking-wider text-slate-600">
+                                    <th class="py-3.5 px-4">No. Pendaftaran</th>
+                                    <th class="py-3.5 px-4">Nama Penuh</th>
+                                    <th class="py-3.5 px-4">Kelas</th>
+                                    <th class="py-3.5 px-4">Status</th>
+                                    <th class="py-3.5 px-4 text-right">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminTableBody" class="divide-y divide-slate-100 text-sm">
+                                <!-- Diisi oleh JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer Rasmi -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-auto no-print">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-500">
+            <p class="font-medium text-slate-600">&copy; 2026 Kelab CIENSTA &bull; Jabatan Kejuruteraan Awam (JKA). Hak Cipta Terpelihara.</p>
+            <p>Sebarang pertanyaan, sila hubungi Exco Multimedia & Penerbitan CIENSTA.</p>
+        </div>
+    </footer>
+
+    <!-- Logik Aplikasi JavaScript -->
+    <script>
+        // ==========================================
+        // 1. PANGKALAN DATA SAMPEL & PENYIMPANAN
+        // ==========================================
+        const STORAGE_KEY = 'ciensta_jka_interview_records_v1';
+        const ADMIN_PASS = 'admin123';
+
+        // 8 Rekod Sampel Awal
+        const defaultRecords = [
+            {
+                regNo: '20DKA24F1001',
+                name: 'MUHAMMAD DANISH HAIKAL BIN ZULKIFLI',
+                studentClass: 'DKA2A',
+                status: 'BERJAYA'
+            },
+            {
+                regNo: '20DKA24F1002',
+                name: 'NURUL AIN SYAFIQAH BINTI AHMAD FAUZI',
+                studentClass: 'DKA1B',
+                status: 'BERJAYA'
+            },
+            {
+                regNo: '20DKA24F1003',
+                name: 'DARREN WONG JUN WEI',
+                studentClass: 'DKA3A',
+                status: 'BERJAYA'
+            },
+            {
+                regNo: '20DKA24F1004',
+                name: 'SITI NURHALIZA BINTI MOHD RAZAK',
+                studentClass: 'DKA1A',
+                status: 'TIDAK BERJAYA'
+            },
+            {
+                regNo: '20DKA24F1005',
+                name: 'KAVINESH A/L SUBRAMANIAM',
+                studentClass: 'DKA2B',
+                status: 'BERJAYA'
+            },
+            {
+                regNo: '20DKA24F1006',
+                name: 'AMIRUL MUKMININ BIN ISMAIL',
+                studentClass: 'DKA3B',
+                status: 'TIDAK BERJAYA'
+            },
+            {
+                regNo: '20DKA24F1007',
+                name: 'DAYANGKU NUR FATIHAH BINTI AWANGKU OMAR',
+                studentClass: 'DKA1A',
+                status: 'BERJAYA'
+            },
+            {
+                regNo: '20DKA24F1008',
+                name: 'CHONG WEI MING',
+                studentClass: 'DKA2A',
+                status: 'TIDAK BERJAYA'
+            }
+        ];
+
+        let records = [];
+        let isAdminLoggedIn = false;
+
+        // Muat data dari localStorage semasa halaman dibuka
+        function loadRecords() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    records = JSON.parse(saved);
+                } else {
+                    records = [...defaultRecords];
+                    saveRecordsToStorage();
+                }
+            } catch (e) {
+                console.error('Ralat memuatkan data:', e);
+                records = [...defaultRecords];
+            }
+        }
+
+        function saveRecordsToStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+            } catch (e) {
+                showToast('Gagal menyimpan ke storan pelayar.', 'error');
+            }
+        }
+
+        // ==========================================
+        // 2. FUNGSI SEMAKAN KEPUTUSAN PELAJAR
+        // ==========================================
+        const regNoInput = document.getElementById('regNoInput');
+        const clearInputBtn = document.getElementById('clearInputBtn');
+
+        regNoInput.addEventListener('input', () => {
+            if (regNoInput.value.trim().length > 0) {
+                clearInputBtn.classList.remove('hidden');
+            } else {
+                clearInputBtn.classList.add('hidden');
+            }
+        });
+
+        function quickFill(sampleReg) {
+            regNoInput.value = sampleReg;
+            clearInputBtn.classList.remove('hidden');
+            performSearch(sampleReg);
+        }
+
+        function clearSearch() {
+            regNoInput.value = '';
+            clearInputBtn.classList.add('hidden');
+            document.getElementById('resultContainer').classList.add('hidden');
+            regNoInput.focus();
+        }
+
+        function handleSearch(event) {
+            event.preventDefault();
+            performSearch(regNoInput.value);
+        }
+
+        function performSearch(rawQuery) {
+            const query = rawQuery.trim().toUpperCase();
+            const resultContainer = document.getElementById('resultContainer');
+
+            if (!query) {
+                showToast('Sila masukkan No. Pendaftaran Pelajar terlebih dahulu.', 'warning');
+                regNoInput.focus();
+                return;
+            }
+
+            // Carian tidak sensitif huruf besar/kecil & trim ruang kosong
+            const found = records.find(item => item.regNo.trim().toUpperCase() === query);
+
+            resultContainer.classList.remove('hidden');
+
+            if (!found) {
+                // Paparan Ralat Mesra (Tiada dalam rekod)
+                resultContainer.innerHTML = `
+                    <div class="bg-white rounded-2xl shadow-lg border-2 border-amber-200 p-6 sm:p-8 text-center animate-reveal">
+                        <div class="w-14 h-14 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="search-x" class="w-7 h-7"></i>
+                        </div>
+                        <h3 class="font-display text-lg font-extrabold text-navy-950">Rekod Tidak Dijumpai</h3>
+                        <p class="mt-2 text-sm sm:text-base text-slate-600 max-w-lg mx-auto leading-relaxed">
+                            Harap maaf, No. Pendaftaran tidak dijumpai dalam rekod temuduga. Sila pastikan nombor yang dimasukkan adalah tepat.
+                        </p>
+                        <div class="mt-4 inline-block px-3 py-1 bg-slate-100 rounded-lg text-xs font-mono text-slate-600">
+                            Carian: <strong>${escapeHtml(query)}</strong>
+                        </div>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            const isSuccess = found.status.trim().toUpperCase() === 'BERJAYA';
+            const currentDate = new Date().toLocaleDateString('ms-MY', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            if (isSuccess) {
+                // KAD KEPUTUSAN: BERJAYA (Tema Hijau & Emas)
+                resultContainer.innerHTML = `
+                    <div id="printableSlip" class="bg-white rounded-2xl shadow-xl border-2 border-emerald-500/40 overflow-hidden animate-reveal">
+                        <!-- Header Khas Cetakan Sahaja -->
+                        <div class="hidden print-only-header items-center justify-between border-b-2 border-navy-900 pb-4 mb-6">
+                            <div>
+                                <h2 class="font-bold text-lg text-navy-950 uppercase">Kelab CIENSTA - Jabatan Kejuruteraan Awam (JKA)</h2>
+                                <p class="text-xs text-slate-600">Slip Rasmi Semakan Keputusan Temuduga</p>
+                            </div>
+                            <span class="text-xs font-mono text-slate-500">Tarikh Cetakan: ${currentDate}</span>
+                        </div>
+
+                        <!-- Jalur Atas Hijau-Emas -->
+                        <div class="bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 px-6 py-4 text-white flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-amber-400 text-navy-950 flex items-center justify-center shadow">
+                                    <i data-lucide="trophy" class="w-5 h-5"></i>
+                                </div>
+                                <span class="font-display font-bold tracking-wide text-sm sm:text-base uppercase">Keputusan Rasmi Temuduga</span>
+                            </div>
+                            <span class="px-3.5 py-1 rounded-full bg-amber-400 text-navy-950 font-extrabold text-xs tracking-wider uppercase shadow-sm">
+                                BERJAYA
+                            </span>
+                        </div>
+
+                        <div class="p-6 sm:p-8 space-y-6">
+                            <!-- Butiran Pelajar -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-xl border border-slate-200/80">
+                                <div class="sm:col-span-2">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Nama Penuh Pelajar</span>
+                                    <span class="text-base sm:text-lg font-extrabold text-navy-950 mt-0.5 block">${escapeHtml(found.name)}</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">No. Pendaftaran</span>
+                                    <span class="text-sm sm:text-base font-mono font-bold text-navy-900 mt-0.5 block">${escapeHtml(found.regNo)}</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Kelas Semasa</span>
+                                    <span class="text-sm sm:text-base font-bold text-navy-900 mt-0.5 block">${escapeHtml(found.studentClass)}</span>
+                                </div>
+                            </div>
+
+                            <!-- Kotak Mesej Khusus Berjaya -->
+                            <div class="bg-gradient-to-br from-emerald-50 to-amber-50/60 border-l-4 border-emerald-600 rounded-r-xl p-5 flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 mt-0.5 shadow-sm">
+                                    <i data-lucide="check-circle-2" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-display font-extrabold text-emerald-900 text-base mb-1">Status: Layak & Diterima</h4>
+                                    <p class="text-sm sm:text-base text-emerald-950 font-medium leading-relaxed">
+                                        Tahniah! Anda telah berjaya temuduga tempoh hari. Maklumat lanjut berkaitan keputusan ini akan dimaklumkan di dalam group community CIENSTA.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Butang Tindakan (Cetak Slip) -->
+                            <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 no-print">
+                                <span class="text-xs text-slate-400">Sila simpan atau cetak slip ini untuk rujukan pendaftaran ahli.</span>
+                                <button onclick="window.print()" class="w-full sm:w-auto px-5 py-2.5 bg-navy-900 hover:bg-navy-800 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                    <i data-lucide="printer" class="w-4 h-4 text-amber-400"></i>
+                                    <span>Cetak Slip Keputusan</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // KAD KEPUTUSAN: TIDAK BERJAYA (Tema Kemas & Sopan)
+                resultContainer.innerHTML = `
+                    <div id="printableSlip" class="bg-white rounded-2xl shadow-xl border border-slate-300 overflow-hidden animate-reveal">
+                        <!-- Header Khas Cetakan Sahaja -->
+                        <div class="hidden print-only-header items-center justify-between border-b-2 border-navy-900 pb-4 mb-6">
+                            <div>
+                                <h2 class="font-bold text-lg text-navy-950 uppercase">Kelab CIENSTA - Jabatan Kejuruteraan Awam (JKA)</h2>
+                                <p class="text-xs text-slate-600">Slip Rasmi Semakan Keputusan Temuduga</p>
+                            </div>
+                            <span class="text-xs font-mono text-slate-500">Tarikh Cetakan: ${currentDate}</span>
+                        </div>
+
+                        <!-- Jalur Atas Navy-Slate -->
+                        <div class="bg-navy-900 px-6 py-4 text-white flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-white/10 text-slate-200 flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                                </div>
+                                <span class="font-display font-bold tracking-wide text-sm sm:text-base uppercase">Keputusan Rasmi Temuduga</span>
+                            </div>
+                            <span class="px-3.5 py-1 rounded-full bg-rose-500/20 border border-rose-400/40 text-rose-200 font-bold text-xs tracking-wider uppercase">
+                                TIDAK BERJAYA
+                            </span>
+                        </div>
+
+                        <div class="p-6 sm:p-8 space-y-6">
+                            <!-- Butiran Pelajar -->
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 p-5 rounded-xl border border-slate-200/80">
+                                <div class="sm:col-span-2">
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Nama Penuh Pelajar</span>
+                                    <span class="text-base sm:text-lg font-extrabold text-navy-950 mt-0.5 block">${escapeHtml(found.name)}</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">No. Pendaftaran</span>
+                                    <span class="text-sm sm:text-base font-mono font-bold text-navy-900 mt-0.5 block">${escapeHtml(found.regNo)}</span>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-bold uppercase tracking-wider text-slate-400 block">Kelas Semasa</span>
+                                    <span class="text-sm sm:text-base font-bold text-navy-900 mt-0.5 block">${escapeHtml(found.studentClass)}</span>
+                                </div>
+                            </div>
+
+                            <!-- Kotak Mesej Khusus Tidak Berjaya -->
+                            <div class="bg-slate-100/90 border-l-4 border-slate-500 rounded-r-xl p-5 flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                    <i data-lucide="info" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-display font-bold text-slate-800 text-base mb-1">Makluman Keputusan</h4>
+                                    <p class="text-sm sm:text-base text-slate-700 font-medium leading-relaxed">
+                                        Dukacita dimaklumkan anda tidak tersenarai untuk calon yang berjaya dalam urusan temuduga.
+                                    </p>
+                                    <p class="text-xs text-slate-500 mt-2">
+                                        Terima kasih atas minat dan komitmen anda menyertai sesi temuduga Kelab CIENSTA JKA. Jangan berputus asa dan cuba lagi pada sesi akan datang!
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Butang Tindakan (Cetak Slip) -->
+                            <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-slate-100 no-print">
+                                <span class="text-xs text-slate-400">Slip semakan rasmi dijana oleh sistem CIENSTA JKA.</span>
+                                <button onclick="window.print()" class="w-full sm:w-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                                    <i data-lucide="printer" class="w-4 h-4"></i>
+                                    <span>Cetak Slip Keputusan</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // 3. NAVIGASI TAB & MOD PANEL ADMIN
+        // ==========================================
+        function switchView(view) {
+            const studentView = document.getElementById('studentView');
+            const adminView = document.getElementById('adminView');
+            const btnStudent = document.getElementById('btnTabStudent');
+            const btnAdmin = document.getElementById('btnTabAdmin');
+
+            if (view === 'student') {
+                studentView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+
+                btnStudent.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-amber-500 text-navy-950 shadow-sm flex items-center gap-1.5';
+                btnAdmin.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-200 hover:text-white hover:bg-white/10 flex items-center gap-1.5';
+            } else {
+                studentView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+
+                btnAdmin.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all bg-amber-500 text-navy-950 shadow-sm flex items-center gap-1.5';
+                btnStudent.className = 'px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all text-slate-200 hover:text-white hover:bg-white/10 flex items-center gap-1.5';
+
+                updateAdminUI();
+            }
+        }
+
+        function handleAdminLogin(event) {
+            event.preventDefault();
+            const passInput = document.getElementById('adminPasswordInput');
+            if (passInput.value === ADMIN_PASS) {
+                isAdminLoggedIn = true;
+                passInput.value = '';
+                showToast('Berjaya log masuk ke Panel Admin.', 'success');
+                updateAdminUI();
+            } else {
+                showToast('Kata laluan tidak sah! Sila cuba lagi.', 'error');
+                passInput.focus();
+            }
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            cancelEdit();
+            updateAdminUI();
+            showToast('Anda telah log keluar dari Panel Admin.', 'info');
+        }
+
+        function updateAdminUI() {
+            const loginCard = document.getElementById('adminLoginCard');
+            const dashboard = document.getElementById('adminDashboard');
+
+            if (isAdminLoggedIn) {
+                loginCard.classList.add('hidden');
+                dashboard.classList.remove('hidden');
+                renderAdminTable();
+            } else {
+                loginCard.classList.remove('hidden');
+                dashboard.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // 4. OPERASI CRUD ADMIN & IMPORT CSV
+        // ==========================================
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminTableBody');
+            const filterText = (document.getElementById('adminFilterInput')?.value || '').trim().toUpperCase();
+
+            // Kemaskini statistik
+            const passCount = records.filter(r => r.status === 'BERJAYA').length;
+            const failCount = records.length - passCount;
+            document.getElementById('statTotal').textContent = records.length;
+            document.getElementById('statPass').textContent = passCount;
+            document.getElementById('statFail').textContent = failCount;
+
+            const filtered = records.filter(r => 
+                r.name.toUpperCase().includes(filterText) || 
+                r.regNo.toUpperCase().includes(filterText) ||
+                r.studentClass.toUpperCase().includes(filterText)
+            );
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="py-8 text-center text-slate-400 text-sm">
+                            Tiada rekod ditemui.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(item => {
+                const isPass = item.status === 'BERJAYA';
+                const badgeClass = isPass 
+                    ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
+                    : 'bg-rose-100 text-rose-800 border-rose-200';
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3 px-4 font-mono font-bold text-navy-900 whitespace-nowrap">${escapeHtml(item.regNo)}</td>
+                        <td class="py-3 px-4 font-medium text-slate-800">${escapeHtml(item.name)}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-600 whitespace-nowrap">${escapeHtml(item.studentClass)}</td>
+                        <td class="py-3 px-4 whitespace-nowrap">
+                            <span class="px-2.5 py-1 text-xs font-bold rounded-full border ${badgeClass}">
+                                ${escapeHtml(item.status)}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1.5">
+                                <button onclick="editCandidate('${escapeHtml(item.regNo)}')" title="Edit Rekod" class="p-1.5 text-slate-500 hover:text-navy-900 hover:bg-slate-200/70 rounded-lg transition-colors cursor-pointer">
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                </button>
+                                <button onclick="deleteCandidate('${escapeHtml(item.regNo)}')" title="Padam Rekod" class="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function saveCandidate(event) {
+            event.preventDefault();
+            const originalRegNo = document.getElementById('editOriginalRegNo').value.trim().toUpperCase();
+            const name = document.getElementById('inputFullName').value.trim().toUpperCase();
+            const regNo = document.getElementById('inputRegNo').value.trim().toUpperCase();
+            const studentClass = document.getElementById('inputClass').value.trim().toUpperCase();
+            const status = document.getElementById('inputStatus').value.trim().toUpperCase();
+
+            if (!name || !regNo || !studentClass) {
+                showToast('Sila lengkapkan semua ruangan maklumat.', 'warning');
+                return;
+            }
+
+            if (originalRegNo) {
+                // Mod Edit
+                const duplicate = records.find(r => r.regNo === regNo && r.regNo !== originalRegNo);
+                if (duplicate) {
+                    showToast(`No. Pendaftaran ${regNo} telah wujud untuk pelajar lain.`, 'error');
+                    return;
+                }
+                const idx = records.findIndex(r => r.regNo === originalRegNo);
+                if (idx !== -1) {
+                    records[idx] = { regNo, name, studentClass, status };
+                    showToast('Rekod pelajar berjaya dikemaskini.', 'success');
+                }
+            } else {
+                // Mod Tambah Baharu
+                const exists = records.find(r => r.regNo === regNo);
+                if (exists) {
+                    showToast(`No. Pendaftaran ${regNo} sudah wujud dalam senarai.`, 'error');
+                    return;
+                }
+                records.unshift({ regNo, name, studentClass, status });
+                showToast('Rekod pelajar baharu berjaya ditambah.', 'success');
+            }
+
+            saveRecordsToStorage();
+            cancelEdit();
+            renderAdminTable();
+        }
+
+        function editCandidate(regNo) {
+            const target = records.find(r => r.regNo === regNo);
+            if (!target) return;
+
+            document.getElementById('editOriginalRegNo').value = target.regNo;
+            document.getElementById('inputFullName').value = target.name;
+            document.getElementById('inputRegNo').value = target.regNo;
+            document.getElementById('inputClass').value = target.studentClass;
+            document.getElementById('inputStatus').value = target.status;
+
+            document.getElementById('formTitle').innerHTML = `
+                <i data-lucide="user-cog" class="w-5 h-5 text-amber-500"></i>
+                <span>Edit Rekod: ${escapeHtml(target.regNo)}</span>
+            `;
+            document.getElementById('btnSaveCandidate').textContent = 'Kemaskini Rekod';
+            document.getElementById('btnCancelEdit').classList.remove('hidden');
+            lucide.createIcons();
+
+            document.getElementById('inputFullName').focus();
+        }
+
+        function cancelEdit() {
+            document.getElementById('editOriginalRegNo').value = '';
+            document.getElementById('candidateForm').reset();
+            document.getElementById('formTitle').innerHTML = `
+                <i data-lucide="user-plus" class="w-5 h-5 text-amber-500"></i>
+                <span>Tambah Rekod Pelajar Baharu</span>
+            `;
+            document.getElementById('btnSaveCandidate').textContent = 'Simpan Rekod';
+            document.getElementById('btnCancelEdit').classList.add('hidden');
+            lucide.createIcons();
+        }
+
+        function deleteCandidate(regNo) {
+            records = records.filter(r => r.regNo !== regNo);
+            saveRecordsToStorage();
+            renderAdminTable();
+            showToast(`Rekod ${regNo} telah dipadam.`, 'info');
+        }
+
+        function handleBulkImport() {
+            const rawText = document.getElementById('bulkCsvInput').value.trim();
+            if (!rawText) {
+                showToast('Sila masukkan data senarai pelajar terlebih dahulu.', 'warning');
+                return;
+            }
+
+            const lines = rawText.split('\n');
+            let addedCount = 0;
+            let updatedCount = 0;
+
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return;
+
+                // Sokong pemisah koma (,) atau semikolon (;) atau tab
+                const parts = trimmedLine.split(/[,;\t]+/).map(p => p.trim().toUpperCase());
+                if (parts.length >= 4) {
+                    const [name, regNo, studentClass, rawStatus] = parts;
+                    const status = rawStatus.includes('TIDAK') ? 'TIDAK BERJAYA' : 'BERJAYA';
+
+                    const existingIdx = records.findIndex(r => r.regNo === regNo);
+                    if (existingIdx !== -1) {
+                        records[existingIdx] = { name, regNo, studentClass, status };
+                        updatedCount++;
+                    } else {
+                        records.unshift({ name, regNo, studentClass, status });
+                        addedCount++;
+                    }
+                }
+            });
+
+            if (addedCount > 0 || updatedCount > 0) {
+                saveRecordsToStorage();
+                renderAdminTable();
+                document.getElementById('bulkCsvInput').value = '';
+                showToast(`Import selesai: ${addedCount} ditambah, ${updatedCount} dikemaskini.`, 'success');
+            } else {
+                showToast('Format tidak sah. Pastikan format: NAMA, NO_PENDAFTARAN, KELAS, STATUS', 'error');
+            }
+        }
+
+        function resetToDefaultData() {
+            records = [...defaultRecords];
+            saveRecordsToStorage();
+            cancelEdit();
+            renderAdminTable();
+            showToast('Pangkalan data telah ditetapkan semula kepada sampel asal.', 'info');
+        }
+
+        // ==========================================
+        // 5. UTILITI (TOAST & KESELAMATAN XSS)
+        // ==========================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+
+            const styles = {
+                success: 'bg-emerald-900 text-white border-emerald-500',
+                error: 'bg-rose-900 text-white border-rose-500',
+                warning: 'bg-amber-900 text-white border-amber-400',
+                info: 'bg-navy-900 text-white border-blue-400'
+            };
+
+            const icons = {
+                success: 'check-circle',
+                error: 'alert-circle',
+                warning: 'alert-triangle',
+                info: 'info'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl border-l-4 text-xs sm:text-sm font-medium animate-reveal ${styles[type] || styles.info}`;
+            toast.innerHTML = `
+                <i data-lucide="${icons[type] || 'info'}" class="w-4 h-4 flex-shrink-0"></i>
+                <span>${escapeHtml(message)}</span>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(8px)';
+                toast.style.transition = 'all 0.25s ease';
+                setTimeout(() => toast.remove(), 250);
+            }, 3500);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Inisialisasi aplikasi semasa dimuatkan
+        window.addEventListener('DOMContentLoaded', () => {
+            loadRecords();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
